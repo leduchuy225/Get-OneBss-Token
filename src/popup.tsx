@@ -1,50 +1,92 @@
-import React, { useEffect, useState } from "react";
+import { loginOneBSS } from "./api";
+import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
+import {
+  TOKEN,
+  USER_NAME,
+  getUsername,
+  saveToLocal,
+  removeFromLocal,
+} from "./utils";
 
 const Popup = () => {
-  const [count, setCount] = useState(0);
-  const [currentURL, setCurrentURL] = useState<string>();
+  const [maND, setMaND] = useState(getUsername());
+  const [status, setStatus] = useState(false);
 
-  useEffect(() => {
-    chrome.action.setBadgeText({ text: count.toString() });
-  }, [count]);
-
-  useEffect(() => {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      setCurrentURL(tabs[0].url);
+  const accessLocalStorage = async (data: string) => {
+    const [tab] = await chrome.tabs.query({
+      active: true,
+      currentWindow: true,
     });
-  }, []);
 
-  const changeBackground = () => {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      const tab = tabs[0];
-      if (tab.id) {
-        chrome.tabs.sendMessage(
-          tab.id,
-          {
-            color: "#555555",
-          },
-          (msg) => {
-            console.log("result message:", msg);
+    if (tab.url?.includes("onebss.vnpt.vn")) {
+      await chrome.scripting.executeScript({
+        args: [data] as [string],
+        target: { tabId: tab.id! },
+        func: (value) => {
+          localStorage.clear();
+          const loginData = JSON.parse(value);
+          for (const key in loginData) {
+            localStorage.setItem(key, loginData[key]);
           }
-        );
-      }
+          if (location.href.includes("/auth/login")) {
+            location.href = "https://onebss.vnpt.vn/#/";
+          }
+          location.reload();
+        },
+      });
+    }
+  };
+
+  const onClick = async () => {
+    const username = maND.trim();
+    if (!username) {
+      alert("Please enter username");
+      return;
+    }
+
+    saveToLocal(USER_NAME, username);
+    const data = await loginOneBSS(username).catch((error) => {
+      removeFromLocal(TOKEN);
+      return loginOneBSS(username);
     });
+
+    if (!data["OneBSS-Token"]) {
+      alert(data["Message-ToolOne"]);
+      return;
+    }
+
+    const tokenData = JSON.parse(data["OneBSS-Token"]);
+    const token = tokenData["access_token"];
+
+    await navigator.clipboard.writeText(token);
+    await accessLocalStorage(JSON.stringify(data));
+
+    setStatus(true);
   };
 
   return (
     <>
-      <ul style={{ minWidth: "700px" }}>
-        <li>Current URL: {currentURL}</li>
-        <li>Current Time: {new Date().toLocaleTimeString()}</li>
-      </ul>
-      <button
-        onClick={() => setCount(count + 1)}
-        style={{ marginRight: "5px" }}
-      >
-        count up
+      <label>Username</label>
+      <br />
+      <input
+        type="text"
+        value={maND}
+        defaultValue={maND}
+        onChange={(event) => setMaND(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            onClick();
+          }
+        }}
+      />
+      <br />
+      <br />
+      <button type="button" onClick={onClick}>
+        Click Me
       </button>
-      <button onClick={changeBackground}>change background</button>
+
+      {status && <h2>Copy successfully !!!</h2>}
     </>
   );
 };
