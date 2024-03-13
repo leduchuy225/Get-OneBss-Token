@@ -1,17 +1,23 @@
 import { loginOneBSS } from "./api";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   TOKEN,
-  USER_NAME,
+  HISTORY,
   getUsername,
-  saveToLocal,
+  getFromLocal,
+  saveUsername,
   removeFromLocal,
 } from "./utils";
 
 const Popup = () => {
-  const [maND, setMaND] = useState(getUsername());
   const [status, setStatus] = useState(false);
+  const [maND, setMaND] = useState(getUsername());
+  const [historyList, setHistoryList] = useState<string[]>([]);
+
+  useEffect(() => {
+    setHistoryList(getFromLocal(HISTORY) ?? []);
+  }, []);
 
   const accessLocalStorage = async (data: string) => {
     const [tab] = await chrome.tabs.query({
@@ -38,6 +44,14 @@ const Popup = () => {
     }
   };
 
+  const showMessage = () => {
+    setStatus(true);
+    const timeout = setTimeout(() => {
+      setStatus(false);
+      clearTimeout(timeout);
+    }, 2000);
+  };
+
   const onClick = async () => {
     const username = maND.trim();
     if (!username) {
@@ -45,7 +59,6 @@ const Popup = () => {
       return;
     }
 
-    saveToLocal(USER_NAME, username);
     const data = await loginOneBSS(username).catch((error) => {
       removeFromLocal(TOKEN);
       return loginOneBSS(username);
@@ -56,13 +69,14 @@ const Popup = () => {
       return;
     }
 
+    saveUsername(username);
     const tokenData = JSON.parse(data["OneBSS-Token"]);
     const token = tokenData["access_token"];
 
     await navigator.clipboard.writeText(token);
     await accessLocalStorage(JSON.stringify(data));
 
-    setStatus(true);
+    showMessage();
   };
 
   return (
@@ -70,8 +84,10 @@ const Popup = () => {
       <label>Username</label>
       <br />
       <input
+        autoFocus
         type="text"
         value={maND}
+        list="historyList"
         defaultValue={maND}
         onChange={(event) => setMaND(event.target.value)}
         onKeyDown={(event) => {
@@ -80,13 +96,27 @@ const Popup = () => {
           }
         }}
       />
+      <datalist id="historyList">
+        {historyList.map((data) => {
+          const dataTrim = data.trim();
+          return (
+            <option key={dataTrim} value={dataTrim}>
+              {dataTrim}
+            </option>
+          );
+        })}
+      </datalist>
       <br />
       <br />
       <button type="button" onClick={onClick}>
         Click Me
       </button>
 
-      {status && <h2>Copy successfully !!!</h2>}
+      {status && (
+        <div style={{ marginTop: 10 }}>
+          <img src="ichinose.webp" width={100} height={100} alt="Successful" />
+        </div>
+      )}
     </>
   );
 };
