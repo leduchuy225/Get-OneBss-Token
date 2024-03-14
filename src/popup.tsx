@@ -47,9 +47,10 @@ const Popup = () => {
   const showMessage = () => {
     setStatus(true);
     const timeout = setTimeout(() => {
-      setStatus(false);
+      // setStatus(false);
       clearTimeout(timeout);
-    }, 2000);
+      window.close();
+    }, 1000);
   };
 
   const onClick = async () => {
@@ -81,21 +82,25 @@ const Popup = () => {
 
   return (
     <>
-      <label>Username</label>
-      <br />
-      <input
-        autoFocus
-        type="text"
-        value={maND}
-        list="historyList"
-        defaultValue={maND}
-        onChange={(event) => setMaND(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            onClick();
-          }
-        }}
-      />
+      <div style={{ flexDirection: "row", whiteSpace: "nowrap" }}>
+        <input
+          autoFocus
+          type="text"
+          value={maND}
+          list="historyList"
+          defaultValue={maND}
+          placeholder="Enter the username"
+          onChange={(event) => setMaND(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              onClick();
+            }
+          }}
+        />
+        <button type="button" onClick={onClick} style={{ marginLeft: 10 }}>
+          Click Me
+        </button>
+      </div>
       <datalist id="historyList">
         {historyList.map((data) => {
           const dataTrim = data.trim();
@@ -106,15 +111,14 @@ const Popup = () => {
           );
         })}
       </datalist>
-      <br />
-      <br />
-      <button type="button" onClick={onClick}>
-        Click Me
-      </button>
-
-      {status && (
+      {status ? (
+        <div style={{ marginTop: 10, display: "flex", alignItems: "center" }}>
+          <img src="ichinose.webp" width={100} height={100} />
+          <h2 style={{ color: "#4CAF50", marginLeft: 10 }}>Successful</h2>
+        </div>
+      ) : (
         <div style={{ marginTop: 10 }}>
-          <img src="ichinose.webp" width={100} height={100} alt="Successful" />
+          <img src="background.jpg" height={200} />
         </div>
       )}
     </>
