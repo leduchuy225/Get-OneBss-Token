@@ -8,6 +8,8 @@ import {
   getFromLocal,
   saveUsername,
   removeFromLocal,
+  HRM_PASSWORD,
+  saveToLocal,
 } from "./utils";
 
 const Popup = () => {
@@ -16,6 +18,9 @@ const Popup = () => {
   const [historyList, setHistoryList] = useState<string[]>([]);
 
   useEffect(() => {
+    if (!getFromLocal(HRM_PASSWORD)) {
+      saveToLocal(HRM_PASSWORD, "demoPassword");
+    }
     setHistoryList(getFromLocal(HISTORY) ?? []);
   }, []);
 

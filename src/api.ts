@@ -1,4 +1,4 @@
-import { getToolToken } from "./utils";
+import { HRM_PASSWORD, getFromLocal, getToolToken } from "./utils";
 
 export const loginToolOne = async () => {
   return fetch("http://10.35.65.20:1235/api/User/login", {
@@ -10,7 +10,7 @@ export const loginToolOne = async () => {
       giu_dn: true,
       ten_nd: "huyld",
       giu_dn_1thang: true,
-      mat_khau: "U$p2kuas",
+      mat_khau: getFromLocal(HRM_PASSWORD),
     }),
   }).then((data) => data.json());
 };

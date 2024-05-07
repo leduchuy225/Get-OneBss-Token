@@ -3,6 +3,7 @@ import { loginToolOne } from "./api";
 export const TOKEN = "accessToken";
 export const USER_NAME = "userName";
 export const HISTORY = "historyList";
+export const HRM_PASSWORD = "hrmPassword";
 
 export const saveToLocal = (key: string, value: string | number | object) => {
   localStorage.setItem(key, JSON.stringify(value));
